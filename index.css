@@ -3,34 +3,40 @@ html, body {
   padding: 0;
   width: 100%;
   height: 100%;
-  background-color: #0099cc;
+  background: #0099cc;
   overflow: hidden;
 }
 
-/* ✅ Контейнер на весь екран + центрування */
+/* ✅ ЕКРАН НА ВЕСЬ VIEWPORT */
 #screen {
   position: fixed;
-  inset: 0;
+  left: 0;
+  top: 0;
+
   width: 100vw;
   height: 100vh;
-
-  display: flex;
-  align-items: center;     /* ✅ вертикальне центрування */
-  justify-content: center; /* ✅ горизонтальне центрування */
 
   background: #0099cc;
   overflow: hidden;
 }
 
-/* ✅ Canvas НЕ ламається, тримає пропорції */
+/* ✅ ЖОРСТКЕ ЦЕНТРУВАННЯ CANVAS ПО ВЕРТИКАЛІ */
 #screen canvas {
-  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
 
-  max-width: 100vw;
-  max-height: 100vh;
+  transform: translate(-50%, -50%);
 
   width: auto;
   height: auto;
 
+  max-width: 100vw;
+  max-height: 100vh;
+
+  display: block;
+
   image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
 }
