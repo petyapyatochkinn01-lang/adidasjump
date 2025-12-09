@@ -16,12 +16,17 @@ html, body {
   touch-action: none;
 }
 
-/* ✅ Контейнер гри — завжди на весь екран */
+/* ✅ ЗМІННА ДЛЯ TELEGRAM REAL HEIGHT */
+:root {
+  --tg-vh: 1vh;
+}
+
+/* ✅ Контейнер гри — ПОВНИЙ екран, включно з Telegram */
 #screen {
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100vh;
+  height: calc(var(--tg-vh) * 100);
 
   display: flex;
   align-items: center;
@@ -34,12 +39,12 @@ html, body {
 /* ✅ Canvas масштабується ПРАВИЛЬНО, без пустоти і без спотворень */
 #screen canvas {
   max-width: 100vw;
-  max-height: 100vh;
+  max-height: calc(var(--tg-vh) * 100);
 
   width: auto;
   height: auto;
 
-  aspect-ratio: 9 / 16; /* портретна гра, як Flappy Bird */
+  aspect-ratio: 9 / 16; /* портрет */
 
   display: block;
 
