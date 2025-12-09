@@ -18,23 +18,32 @@
 <body>
     <canvas id="canvas"></canvas>
 
-    <!-- ✅ ДВИЖОК -->
+    <!-- ✅ 1. ДВИЖОК -->
     <script src="js/melonJS-min.js"></script>
 
-    <!-- ✅ ГОЛОВНИЙ ФАЙЛ -->
+    <!-- ✅ 2. ГРА -->
     <script src="js/game.js"></script>
 
-    <!-- ✅ ФАЙЛИ З ПАПКИ screens -->
+    <!-- ✅ 3. ЕКРАНИ -->
     <script src="js/screens/title.js"></script>
     <script src="js/screens/play.js"></script>
     <script src="js/screens/gameover.js"></script>
 
-    <!-- ✅ ФАЙЛИ З ПАПКИ entities -->
+    <!-- ✅ 4. СУТНОСТІ -->
     <script src="js/entities/HUD.js"></script>
     <script src="js/entities/entities.js"></script>
 
-    <!-- ✅ ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM -->
+    <!-- ✅ 5. ЯВНИЙ СТАРТ ГРИ -->
     <script>
+        me.device.onReady(function () {
+            if (typeof game !== "undefined" && game.onload) {
+                game.onload();
+            } else {
+                console.error("❌ game.onload не знайдено");
+            }
+        });
+
+        // ✅ ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM
         function sendResultToTelegram(score) {
             if (window.Telegram && Telegram.WebApp) {
                 Telegram.WebApp.sendData(JSON.stringify({
