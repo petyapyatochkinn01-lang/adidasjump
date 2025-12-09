@@ -104,27 +104,16 @@ game.GameOverScreen = me.ScreenObject.extend({
         }));
         me.game.world.addChild(this.dialog, 12);
 
-        // ✅✅✅ ГАРАНТОВАНА ВІДПРАВКА В TELEGRAM (1 РАЗ) ✅✅✅
+        // ✅✅✅ ГАРАНТОВАНИЙ РЕДІРЕКТ У БОТА З SCORE ✅✅✅
         if (!this.telegramSent) {
             this.telegramSent = true;
 
-            try {
-                if (window.Telegram &&
-                    Telegram.WebApp &&
-                    typeof Telegram.WebApp.sendData === "function") {
+            var score = Number(game.data.steps) || 0;
 
-                    Telegram.WebApp.sendData(JSON.stringify({
-                        game: "clickgame",
-                        score: Number(game.data.steps) || 0
-                    }));
+            var botUrl = "https://t.me/adidas2026bot?start=score_" + score;
 
-                    console.log("✅ Score sent to Telegram:", game.data.steps);
-                } else {
-                    console.log("❌ Telegram WebApp not found");
-                }
-            } catch (e) {
-                console.log("❌ Telegram sendData error:", e);
-            }
+            console.log("✅ Redirect to bot with score:", score);
+            window.location.href = botUrl;
         }
     },
 
