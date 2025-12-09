@@ -38,13 +38,11 @@ html, body {
 
 /* ✅ Canvas масштабується ПРАВИЛЬНО, без пустоти і без спотворень */
 #screen canvas {
-  max-width: 100vw;
-  max-height: calc(var(--tg-vh) * 100);
+  width: 100%;
+  height: 100%;
 
-  width: auto;
-  height: auto;
-
-  aspect-ratio: 9 / 16; /* портрет */
+  object-fit: cover;        /* ✅ ГОЛОВНЕ — ЗАПОВНЮЄ ЕКРАН БЕЗ СПОТВОРЕННЯ */
+  object-position: center; /* ✅ ЦЕНТР ЗАВЖДИ ПО ЦЕНТРУ */
 
   display: block;
 
@@ -52,6 +50,7 @@ html, body {
   image-rendering: crisp-edges;
   -ms-interpolation-mode: nearest-neighbor;
 }
+
 
 /* --- Інше залишаємо як було --- */
 
