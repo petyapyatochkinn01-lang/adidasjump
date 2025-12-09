@@ -1,73 +1,77 @@
 <!DOCTYPE HTML>
 <html lang="en">
-    <head>
-        <title>Clumsy Bird</title>
+  <head>
+    <title>Clumsy Bird</title>
 
-        <link rel="apple-touch-icon-precomposed" href="data/img/touch-icon-iphone.png"/>
-        <link rel="apple-touch-icon-precomposed" sizes="120x120" href="data/img/touch-icon-iphone-retina.png"/>
-        <link rel="shortcut icon" href="data/img/favicon.ico">
-        <link rel="stylesheet" type="text/css" media="screen" href="index.css">
+    <link rel="apple-touch-icon-precomposed" href="data/img/touch-icon-iphone.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="data/img/touch-icon-iphone-retina.png"/>
+    <link rel="shortcut icon" href="data/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" media="screen" href="index.css">
 
-        <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black">
-        <meta name="apple-mobile-web-app-title" content="Clumsy Bird">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Clumsy Bird">
 
-        <meta charset="UTF-8" />
-        <meta name="description" content="Clumsy Bird - A Flappy Bird clone using MelonJS"/>
-        <meta name="keywords" content="flappybird, flappy, bird, game, html5, melonjs,clone"/>
-        <meta name="robots" content="index, follow">
+    <meta charset="UTF-8" />
+    <meta name="description" content="Clumsy Bird - A Flappy Bird clone using MelonJS"/>
+    <meta name="keywords" content="flappybird, flappy, bird, game, html5, melonjs,clone"/>
+    <meta name="robots" content="index, follow">
 
-        <meta name="google-site-verification" content="RDZI9SqVaffd48uHfZMv67-YdvviOMe2HuULEYqVgd4" />
-        <meta property="og:image" content="http://ellisonleao.github.io/clumsy-bird/data/img/bg.png" />
-        <meta property="og:title" content="Clumsy Bird - A Flappy Bird clone using MelonJS"/>
-        <meta property="og:url" content="http://ellisonleao.github.io/clumsy-bird/"/>
-        <meta property="og:site_name" content="Clumsy Bird - MelonJS"/>
+    <meta name="google-site-verification" content="RDZI9SqVaffd48uHfZMv67-YdvviOMe2HuULEYqVgd4" />
+    <meta property="og:image" content="http://ellisonleao.github.io/clumsy-bird/data/img/bg.png" />
+    <meta property="og:title" content="Clumsy Bird - A Flappy Bird clone using MelonJS"/>
+    <meta property="og:url" content="http://ellisonleao.github.io/clumsy-bird/"/>
+    <meta property="og:site_name" content="Clumsy Bird - MelonJS"/>
 
-        <!-- Twitter Card -->
-        <meta name="twitter:hashtag" content="clumsybird" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:site" content="@ellisonleao" />
-        <meta name="twitter:creator" content="@ellisonleao" />
-        <meta name="twitter:title" content="Clumsy Bird" />
-        <meta name="twitter:description" content="A Flappy Bird melonJS clone" />
+    <!-- Twitter Card -->
+    <meta name="twitter:hashtag" content="clumsybird" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@ellisonleao" />
+    <meta name="twitter:creator" content="@ellisonleao" />
+    <meta name="twitter:title" content="Clumsy Bird" />
+    <meta name="twitter:description" content="A Flappy Bird melonJS clone" />
 
-        <!-- Humans -->
-        <link rel="author" href="humans.txt" />
+    <!-- Humans -->
+    <link rel="author" href="humans.txt" />
 
-        <!-- ✅ TELEGRAM WEBAPP SDK -->
-        <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    </head>
+    <!-- ✅ TELEGRAM WEBAPP SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
 
-    <body>
-        <!-- Canvas placeholder -->
-        <div id="screen"></div>
+  <body>
+    <!-- ✅ КОНТЕЙНЕР CANVAS -->
+    <div id="screen"></div>
 
-        <!-- ✅ MELONJS + GAME -->
-        <script type="text/javascript" src="js/melonJS-min.js"></script>
-        <script type="text/javascript" src="build/clumsy-min.js"></script>
+    <!-- ✅ MELONJS + GAME -->
+    <script type="text/javascript" src="js/melonJS-min.js"></script>
+    <script type="text/javascript" src="build/clumsy-min.js"></script>
 
-        <!-- ✅ СТАРТ ГРИ (ОРИГІНАЛ) -->
-        <script type="text/javascript">
-            window.onReady(function onReady() {
-                game.onload();
-            });
-        </script>
+    <!-- ✅ TELEGRAM + CANVAS HARD FIX -->
+    <script>
+      if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.expand();
+        Telegram.WebApp.disableVerticalSwipes();
+      }
+    </script>
 
-        <!-- ✅ TELEGRAM FULLSCREEN FIX (ГОЛОВНЕ ВИРІШЕННЯ ТВОЄЇ ПРОБЛЕМИ) -->
-        <script>
-            function setTelegramViewportHeight() {
-                let vh = window.innerHeight * 0.01;
-                document.documentElement.style.setProperty('--tg-vh', `${vh}px`);
-            }
+    <!-- ✅ СТАРТ ГРИ -->
+    <script type="text/javascript">
+      window.onReady(function onReady() {
+        game.onload();
 
-            setTelegramViewportHeight();
-            window.addEventListener('resize', setTelegramViewportHeight);
-
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.expand(); // ✅ РОЗГОРТАЄ ГРУ НА ВЕСЬ ЕКРАН У TELEGRAM
-            }
-        </script>
-    </body>
+        // ✅ ПРИМУСОВО РОБИМО CANVAS ВИДИМИМ У TELEGRAM
+        setTimeout(() => {
+          const canvas = document.querySelector('#screen canvas');
+          if (canvas) {
+            canvas.style.opacity = '1';
+            canvas.style.display = 'block';
+            canvas.style.visibility = 'visible';
+            canvas.style.transform = 'none';
+          }
+        }, 300);
+      });
+    </script>
+  </body>
 </html>
