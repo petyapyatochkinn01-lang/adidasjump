@@ -1,33 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>Clumsy Bird - Telegram WebApp</title>
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Clumsy Bird</title>
 
-    <!-- Telegram WebApp SDK -->
+    <!-- Іконки та стилі -->
+    <link rel="apple-touch-icon-precomposed" href="data/img/touch-icon-iphone.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="data/img/touch-icon-iphone-retina.png"/>
+    <link rel="shortcut icon" href="data/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" media="screen" href="index.css">
+
+    <!-- Адаптив -->
+    <meta id="viewport" name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Clumsy Bird">
+
+    <meta name="description" content="Clumsy Bird - A Flappy Bird clone using MelonJS"/>
+    <meta name="keywords" content="flappybird, flappy, bird, game, html5, melonjs,clone"/>
+    <meta name="robots" content="index, follow">
+
+    <!-- (опціональні мета, можна залишити як є) -->
+
+    <!-- Telegram SDK (не ламає гру) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
 
-    <style>
-        body { margin: 0; overflow: hidden; background: #70c5ce; }
-    </style>
-</head>
+  <body>
+    <!-- Місце, куди рендериться гра -->
+    <div id="screen"></div>
 
-<body>
-    <canvas id="canvas"></canvas>
+    <!-- ПОРЯДОК ВАЖЛИВИЙ: спочатку melonJS, потім гра -->
+    <script type="text/javascript" src="js/melonJS-min.js"></script>
+    <script type="text/javascript" src="build/clumsy-min.js"></script>
 
-    <script src="js/impact/impact.js"></script>
-    <script src="js/game/main.js"></script>
-	
-	<script>
-function sendResultToTelegram(score) {
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.sendData(JSON.stringify({
-            game: "clickgame",
-            score: score
-        }));
-    }
-}
-</script>
+    <script type="text/javascript">
+      // Старт гри
+      window.onReady(function onReady() {
+        game.onload();
+      });
 
-</body>
+      // Розгорнути в Telegram (якщо відкрито в веб-апці)
+      if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.expand();
+      }
+    </script>
+  </body>
 </html>
