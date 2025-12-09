@@ -19,10 +19,13 @@
 <body>
     <canvas id="canvas"></canvas>
 
-    <!-- підключаємо зібрану гру -->
+    <!-- ✅ СПОЧАТКУ ДВИЖОК -->
+    <script src="js/melonJS-min.js"></script>
+
+    <!-- ✅ ПОТІМ САМА ГРА -->
     <script src="build/clumsy-min.js"></script>
 
-    <!-- функція для відправки результату в бота -->
+    <!-- ✅ ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM -->
     <script>
         function sendResultToTelegram(score) {
             if (window.Telegram && Telegram.WebApp) {
