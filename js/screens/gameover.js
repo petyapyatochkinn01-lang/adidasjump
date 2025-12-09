@@ -1,10 +1,13 @@
 game.GameOverScreen = me.ScreenObject.extend({
-    init: function() {
+    init: function () {
         this.savedData = null;
         this.handler = null;
+
+        // ✅ ЗАХИСТ ВІД ПОВТОРНОЇ ВІДПРАВКИ
+        this.telegramSent = false;
     },
 
-    onResetEvent: function() {
+    onResetEvent: function () {
         // save section
         this.savedData = {
             score: game.data.score,
@@ -15,6 +18,7 @@ game.GameOverScreen = me.ScreenObject.extend({
         if (!me.save.topSteps) {
             me.save.add({ topSteps: game.data.steps });
         }
+
         if (game.data.steps > me.save.topSteps) {
             me.save.topSteps = game.data.steps;
             game.data.newHiScore = true;
@@ -24,7 +28,7 @@ game.GameOverScreen = me.ScreenObject.extend({
         me.input.bindKey(me.input.KEY.SPACE, "enter", false);
         me.input.bindPointer(me.input.pointer.LEFT, me.input.KEY.ENTER);
 
-        this.handler = me.event.subscribe(me.event.KEYDOWN, function (action, keyCode, edge) {
+        this.handler = me.event.subscribe(me.event.KEYDOWN, function (action) {
             if (action === "enter") {
                 me.state.change(me.state.MENU);
             }
@@ -48,7 +52,8 @@ game.GameOverScreen = me.ScreenObject.extend({
 
         // ground
         this.ground1 = me.pool.pull("ground", 0, me.game.viewport.height - 96);
-        this.ground2 = me.pool.pull("ground",
+        this.ground2 = me.pool.pull(
+            "ground",
             me.game.viewport.width,
             me.video.renderer.getHeight() - 96
         );
@@ -67,7 +72,7 @@ game.GameOverScreen = me.ScreenObject.extend({
 
         // Діалог з результатами
         this.dialog = new (me.Renderable.extend({
-            init: function() {
+            init: function () {
                 this._super(
                     me.Renderable,
                     "init",
@@ -82,7 +87,6 @@ game.GameOverScreen = me.ScreenObject.extend({
                 var stepsText = this.font.measureText(renderer, this.steps);
                 var topStepsText = this.font.measureText(renderer, this.topSteps);
 
-                // steps
                 this.font.draw(
                     renderer,
                     this.steps,
@@ -90,7 +94,6 @@ game.GameOverScreen = me.ScreenObject.extend({
                     me.game.viewport.height / 2
                 );
 
-                // top score
                 this.font.draw(
                     renderer,
                     this.topSteps,
@@ -101,22 +104,31 @@ game.GameOverScreen = me.ScreenObject.extend({
         }));
         me.game.world.addChild(this.dialog, 12);
 
-        // ✅ ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM WEBAPP
-        try {
-            if (window.Telegram && Telegram.WebApp && typeof Telegram.WebApp.sendData === "function") {
-                Telegram.WebApp.sendData(JSON.stringify({
-                    game: "clickgame",
-                    score: game.data.steps   // <-- КІЛЬКІСТЬ ОЧОК = МОНЕТИ В БОТІ
-                }));
+        // ✅✅✅ ГАРАНТОВАНА ВІДПРАВКА В TELEGRAM (1 РАЗ) ✅✅✅
+        if (!this.telegramSent) {
+            this.telegramSent = true;
+
+            try {
+                if (window.Telegram &&
+                    Telegram.WebApp &&
+                    typeof Telegram.WebApp.sendData === "function") {
+
+                    Telegram.WebApp.sendData(JSON.stringify({
+                        game: "clickgame",
+                        score: Number(game.data.steps) || 0
+                    }));
+
+                    console.log("✅ Score sent to Telegram:", game.data.steps);
+                } else {
+                    console.log("❌ Telegram WebApp not found");
+                }
+            } catch (e) {
+                console.log("❌ Telegram sendData error:", e);
             }
-        } catch (e) {
-            // якщо гра запущена не в Telegram або щось пішло не так — просто ігноруємо
-            console.log("Telegram WebApp sendData error:", e);
         }
     },
 
-    onDestroyEvent: function() {
-        // unregister the event
+    onDestroyEvent: function () {
         me.event.unsubscribe(this.handler);
         me.input.unbindKey(me.input.KEY.ENTER);
         me.input.unbindKey(me.input.KEY.SPACE);
