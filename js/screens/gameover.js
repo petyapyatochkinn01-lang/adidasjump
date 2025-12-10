@@ -2,11 +2,10 @@ game.GameOverScreen = me.ScreenObject.extend({
     init: function () {
         this.savedData = null;
         this.handler = null;
-        this.telegramSent = false; // захист від повторної відправки
     },
 
     onResetEvent: function () {
-        // збереження локальної статистики гри
+        // --- Збереження локальної статистики гри ---
         this.savedData = {
             score: game.data.score,
             steps: game.data.steps
@@ -16,13 +15,12 @@ game.GameOverScreen = me.ScreenObject.extend({
         if (!me.save.topSteps) {
             me.save.add({ topSteps: game.data.steps });
         }
-
         if (game.data.steps > me.save.topSteps) {
             me.save.topSteps = game.data.steps;
             game.data.newHiScore = true;
         }
 
-        // керування
+        // --- Управління клавішами ---
         me.input.bindKey(me.input.KEY.ENTER, "enter", true);
         me.input.bindKey(me.input.KEY.SPACE, "enter", false);
         me.input.bindPointer(me.input.pointer.LEFT, me.input.KEY.ENTER);
@@ -33,7 +31,7 @@ game.GameOverScreen = me.ScreenObject.extend({
             }
         });
 
-        // GAME OVER спрайт
+        // --- Спрайт "GAME OVER" ---
         me.game.world.addChild(new me.Sprite(
             me.game.viewport.width / 2,
             me.game.viewport.height / 2 - 100,
@@ -47,9 +45,10 @@ game.GameOverScreen = me.ScreenObject.extend({
         );
         me.game.world.addChild(gameOverBG, 10);
 
+        // фон
         me.game.world.addChild(new BackgroundLayer("bg", 1));
 
-        // ground
+        // земля
         this.ground1 = me.pool.pull("ground", 0, me.game.viewport.height - 96);
         this.ground2 = me.pool.pull(
             "ground",
@@ -59,7 +58,7 @@ game.GameOverScreen = me.ScreenObject.extend({
         me.game.world.addChild(this.ground1, 11);
         me.game.world.addChild(this.ground2, 11);
 
-        // NEW HI-SCORE
+        // NEW HI-SCORE бейдж
         if (game.data.newHiScore) {
             var newRect = new me.Sprite(
                 gameOverBG.width / 2,
@@ -69,7 +68,7 @@ game.GameOverScreen = me.ScreenObject.extend({
             me.game.world.addChild(newRect, 12);
         }
 
-        // Діалог з результатами
+        // --- Діалог з результатами ---
         this.dialog = new (me.Renderable.extend({
             init: function () {
                 this._super(
@@ -86,6 +85,7 @@ game.GameOverScreen = me.ScreenObject.extend({
                 var stepsText = this.font.measureText(renderer, this.steps);
                 var topStepsText = this.font.measureText(renderer, this.topSteps);
 
+                // поточні очки
                 this.font.draw(
                     renderer,
                     this.steps,
@@ -93,6 +93,7 @@ game.GameOverScreen = me.ScreenObject.extend({
                     me.game.viewport.height / 2
                 );
 
+                // рекорд у грі (локальний)
                 this.font.draw(
                     renderer,
                     this.topSteps,
@@ -103,29 +104,22 @@ game.GameOverScreen = me.ScreenObject.extend({
         }));
         me.game.world.addChild(this.dialog, 12);
 
-        // ✅ ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM
-        if (!this.telegramSent) {
-            this.telegramSent = true;
+        // --- КЛЮЧОВЕ: ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM ---
+        try {
+            if (window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData) {
+                var payload = {
+                    game: "clickgame",
+                    score: Number(game.data.steps) || 0
+                };
 
-            try {
-                if (window.Telegram &&
-                    Telegram.WebApp &&
-                    typeof Telegram.WebApp.sendData === "function") {
+                console.log("Sending score to Telegram:", payload);
 
-                    const payload = {
-                        game: "clickgame",
-                        score: Number(game.data.steps) || 0
-                    };
-
-                    console.log("Sending score to Telegram:", payload);
-
-                    Telegram.WebApp.sendData(JSON.stringify(payload));
-                } else {
-                    console.log("Telegram WebApp API not available");
-                }
-            } catch (e) {
-                console.log("Telegram WebApp sendData error:", e);
+                Telegram.WebApp.sendData(JSON.stringify(payload));
+            } else {
+                console.log("Telegram WebApp not available in this context");
             }
+        } catch (e) {
+            console.log("Telegram WebApp sendData error:", e);
         }
     },
 
