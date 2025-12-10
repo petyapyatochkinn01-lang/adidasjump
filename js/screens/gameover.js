@@ -2,13 +2,11 @@ game.GameOverScreen = me.ScreenObject.extend({
     init: function () {
         this.savedData = null;
         this.handler = null;
-
-        // ✅ ЗАХИСТ ВІД ПОВТОРНОЇ ВІДПРАВКИ
-        this.telegramSent = false;
+        this.telegramSent = false; // захист від повторної відправки
     },
 
     onResetEvent: function () {
-        // save section
+        // збереження локальної статистики гри
         this.savedData = {
             score: game.data.score,
             steps: game.data.steps
@@ -24,6 +22,7 @@ game.GameOverScreen = me.ScreenObject.extend({
             game.data.newHiScore = true;
         }
 
+        // керування
         me.input.bindKey(me.input.KEY.ENTER, "enter", true);
         me.input.bindKey(me.input.KEY.SPACE, "enter", false);
         me.input.bindPointer(me.input.pointer.LEFT, me.input.KEY.ENTER);
@@ -104,16 +103,29 @@ game.GameOverScreen = me.ScreenObject.extend({
         }));
         me.game.world.addChild(this.dialog, 12);
 
-        // ✅✅✅ ГАРАНТОВАНИЙ РЕДІРЕКТ У БОТА З SCORE ✅✅✅
+        // ✅ ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM
         if (!this.telegramSent) {
             this.telegramSent = true;
 
-            var score = Number(game.data.steps) || 0;
+            try {
+                if (window.Telegram &&
+                    Telegram.WebApp &&
+                    typeof Telegram.WebApp.sendData === "function") {
 
-            var botUrl = "https://t.me/adidas2026bot?start=score_" + score;
+                    const payload = {
+                        game: "clickgame",
+                        score: Number(game.data.steps) || 0
+                    };
 
-            console.log("✅ Redirect to bot with score:", score);
-            window.location.href = botUrl;
+                    console.log("Sending score to Telegram:", payload);
+
+                    Telegram.WebApp.sendData(JSON.stringify(payload));
+                } else {
+                    console.log("Telegram WebApp API not available");
+                }
+            } catch (e) {
+                console.log("Telegram WebApp sendData error:", e);
+            }
         }
     },
 
