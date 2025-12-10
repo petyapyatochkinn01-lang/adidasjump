@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
-    <title>Adidas Jump</title>
+    <title>Clumsy Bird</title>
 
     <link rel="apple-touch-icon-precomposed" href="data/img/touch-icon-iphone.png"/>
     <link rel="apple-touch-icon-precomposed" sizes="120x120" href="data/img/touch-icon-iphone-retina.png"/>
@@ -13,42 +13,31 @@
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Adidas Jump">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Clumsy Bird">
 
     <meta charset="UTF-8" />
-    <meta name="description" content="Adidas Jump - mini game" />
+    <meta name="description" content="Clumsy Bird - A Flappy Bird clone using MelonJS"/>
+    <meta name="keywords" content="flappybird, flappy, bird, game, html5, melonjs,clone"/>
     <meta name="robots" content="index, follow">
 
-    <!-- Telegram WebApp SDK -->
+    <!-- TELEGRAM WEBAPP SDK (можна й без нього, але нехай буде) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
 
   <body>
-    <!-- Контейнер для canvas -->
+    <!-- CANVAS-КОНТЕЙНЕР -->
     <div id="screen"></div>
 
-    <!-- melonJS -->
-    <script type="text/javascript" src="js/melonJS-min.js"></script>
+    <!-- MELONJS + ГРА -->
+    <script src="js/melonJS-min.js"></script>
+    <!-- ВАЖЛИВО: САМЕ js/game.js, А НЕ build/clumsy-min.js -->
+    <script src="js/game.js"></script>
 
-    <!-- ОРИГІНАЛЬНИЙ БАНДЛ ГРИ -->
-    <script type="text/javascript" src="build/clumsy-min.js"></script>
-
-    <!-- ⚠️ ТУТ ТВОЄ ПЕРЕОЗНАЧЕННЯ GameOverScreen -->
-    <!-- Переконайся, що цей файл ДІЙСНО існує за шляхом js/gameover.js -->
-    <script type="text/javascript" src="js/screens/gameover.js"></script>
-
-    <!-- Старт гри -->
-    <script type="text/javascript">
-      window.onReady(function onReady() {
+    <script>
+      // Старт melonJS
+      window.onReady(function () {
         game.onload();
-
-        try {
-          if (window.Telegram && Telegram.WebApp) {
-            Telegram.WebApp.expand();
-          }
-        } catch (e) {
-          console.log("Telegram WebApp expand error:", e);
-        }
       });
     </script>
   </body>
