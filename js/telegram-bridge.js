@@ -1,72 +1,81 @@
-// js/telegram-bridge.js
+/**
+ * Telegram bridge: підключення WebApp і відправка результату гри в бота.
+ * Ми НЕ чіпаємо build/clumsy-min.js, усе робимо через прототип GameOverScreen.
+ */
 (function () {
-  if (typeof window === "undefined") return;
-
-  function attachBridge() {
-    try {
-      if (!window.game || !game.GameOverScreen || !game.data) {
-        console.log("[bridge] game/GameOverScreen не готові, чекаємо...");
-        setTimeout(attachBridge, 300);
-        return;
-      }
-
-      console.log("[bridge] patching GameOverScreen...");
-
-      var originalOnReset = game.GameOverScreen.prototype.onResetEvent;
-
-      game.GameOverScreen.prototype.onResetEvent = function () {
-        // викликаємо оригінальну логіку гри
-        if (typeof originalOnReset === "function") {
-          originalOnReset.apply(this, arguments);
-        }
-
-        if (this._telegramSent) return;
-        this._telegramSent = true;
-
-        var score = 0;
+    function attachBridge() {
         try {
-          score = Number(game.data.steps || 0);
+            // чекаємо, поки melonJS і game ініціалізуються
+            if (typeof me === "undefined" || typeof game === "undefined") {
+                console.log("[bridge] me/game not ready, retry...");
+                setTimeout(attachBridge, 500);
+                return;
+            }
+
+            if (!game || !game.GameOverScreen) {
+                console.log("[bridge] GameOverScreen not yet defined, retry...");
+                setTimeout(attachBridge, 500);
+                return;
+            }
+
+            var proto = game.GameOverScreen.prototype;
+
+            // щоб двічі не патчити
+            if (proto.__telegramPatched) {
+                console.log("[bridge] already patched");
+                return;
+            }
+
+            console.log("[bridge] patching GameOverScreen.onResetEvent");
+
+            var originalOnReset = proto.onResetEvent;
+
+            proto.onResetEvent = function () {
+                // 1) спочатку — оригінальна логіка екрана Game Over
+                if (typeof originalOnReset === "function") {
+                    originalOnReset.apply(this, arguments);
+                }
+
+                // 2) дістаємо результат
+                var score = 0;
+                if (game && game.data && typeof game.data.steps === "number") {
+                    score = game.data.steps;
+                }
+
+                // 3) DEBUG: ТИ МАЄШ ПОБАЧИТИ ЦЕ ПОВІДОМЛЕННЯ ПІСЛЯ ПРОГРАШУ
+                try {
+                    alert("DEBUG: score = " + score);
+                } catch (e) {
+                    console.log("[bridge] alert failed:", e);
+                }
+
+                // 4) ВІДПРАВКА В TELEGRAM
+                try {
+                    if (window.Telegram &&
+                        Telegram.WebApp &&
+                        typeof Telegram.WebApp.sendData === "function") {
+
+                        var payload = JSON.stringify({
+                            game: "clickgame",
+                            score: score
+                        });
+
+                        console.log("[bridge] sending to Telegram:", payload);
+                        Telegram.WebApp.sendData(payload);
+                    } else {
+                        console.log("[bridge] Telegram.WebApp.sendData is not available");
+                    }
+                } catch (err) {
+                    console.log("[bridge] error calling Telegram.WebApp.sendData:", err);
+                }
+            };
+
+            proto.__telegramPatched = true;
         } catch (e) {
-          console.log("[bridge] cannot read score:", e);
+            console.log("[bridge] attachBridge error:", e);
         }
-
-        console.log("[bridge] GAME OVER, steps =", score);
-
-        // ЩОБ ТИ ТОЧНО БАЧИВ, ЩО КОД СПРАЦЮВАВ
-        try {
-          alert("Score sent to bot: " + score);
-        } catch (e) {
-          console.log("[bridge] alert error:", e);
-        }
-
-        try {
-          if (
-            window.Telegram &&
-            Telegram.WebApp &&
-            typeof Telegram.WebApp.sendData === "function"
-          ) {
-            var payload = JSON.stringify({
-              game: "clickgame",
-              score: score
-            });
-
-            console.log("[bridge] sending payload to Telegram:", payload);
-            Telegram.WebApp.sendData(payload);
-          } else {
-            console.log(
-              "[bridge] Telegram.WebApp.sendData недоступний (браузер? не WebApp?)"
-            );
-          }
-        } catch (err) {
-          console.log("[bridge] Telegram WebApp sendData error:", err);
-        }
-      };
-
-      console.log("[bridge] GameOverScreen successfully patched");
-    } catch (e) {
-      console.log("[bridge] global bridge error:", e);
     }
-  }
 
-  attachBridge();
+    // стартуємо одразу
+    attachBridge();
 })();
