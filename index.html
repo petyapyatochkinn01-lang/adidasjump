@@ -1,41 +1,47 @@
 <!DOCTYPE HTML>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Adidas Jump</title>
+<html lang="en">
+  <head>
+    <title>Clumsy Bird</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon-precomposed" href="data/img/touch-icon-iphone.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="data/img/touch-icon-iphone-retina.png"/>
+    <link rel="shortcut icon" href="data/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" media="screen" href="index.css">
+
+    <meta id="viewport" name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Clumsy Bird">
 
-    <link rel="stylesheet" href="index.css">
+    <meta charset="UTF-8" />
+    <meta name="description" content="Clumsy Bird - A Flappy Bird clone using MelonJS"/>
+    <meta name="keywords" content="flappybird, flappy, bird, game, html5, melonjs,clone"/>
+    <meta name="robots" content="index, follow">
 
-    <!-- ✅ Telegram WebApp SDK -->
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
+  </head>
 
-<body>
+  <body>
+    <!-- Контейнер для canvas -->
     <div id="screen"></div>
 
-    <!-- ✅ 1. melonJS -->
+    <!-- 1. melonJS -->
     <script src="js/melonJS-min.js"></script>
 
-    <!-- ✅ 2. game.js — СТВОРЮЄ window.game -->
-    <script src="js/game.js"></script>
+    <!-- 2. ОРИГІНАЛЬНИЙ БІЛД ГРИ (нічого в ньому не чіпаємо) -->
+    <script src="build/clumsy-min.js"></script>
 
-    <!-- ✅ 3. entities -->
-    <script src="js/entities/entities.js"></script>
-    <script src="js/entities/HUD.js"></script>
+    <!-- 3. Наш міст до Telegram (новий файл, код нижче) -->
+    <script src="js/telegram-bridge.js"></script>
 
-    <!-- ✅ 4. screens -->
-    <script src="js/screens/title.js"></script>
-    <script src="js/screens/play.js"></script>
-    <script src="js/screens/gameover.js"></script>
-
+    <!-- Старт гри -->
     <script>
-        window.onReady(function () {
-            game.onload();
-        });
+      window.onReady(function () {
+        game.onload();
+      });
     </script>
-</body>
+  </body>
 </html>
