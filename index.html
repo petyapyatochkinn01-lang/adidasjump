@@ -28,14 +28,19 @@
     <!-- Контейнер для canvas -->
     <div id="screen"></div>
 
-    <!-- 1. melonJS -->
-    <script src="js/melonJS-min.js"></script>
+<!-- melonJS Library -->
+<script type="text/javascript" src="js/melonJS-min.js"></script>
+<script type="text/javascript" src="build/clumsy-min.js"></script>
 
-    <!-- 2. ОРИГІНАЛЬНИЙ БІЛД ГРИ (нічого в ньому не чіпаємо) -->
-    <script src="build/clumsy-min.js"></script>
+<!-- 🟢 НАШ ПАТЧ ДЛЯ TELEGRAM – ОБОВ'ЯЗКОВО ПІСЛЯ clumsy-min.js -->
+<script type="text/javascript" src="js/telegram-patch.js"></script>
 
-    <!-- 3. Наш міст до Telegram (новий файл, код нижче) -->
-    <script src="js/telegram-bridge.js"></script>
+<script type="text/javascript">
+    window.onReady(function onReady() {
+        game.onload();
+    });
+</script>
+
 
     <!-- Старт гри -->
     <script>
