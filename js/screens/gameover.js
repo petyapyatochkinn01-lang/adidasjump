@@ -2,10 +2,11 @@ game.GameOverScreen = me.ScreenObject.extend({
     init: function () {
         this.savedData = null;
         this.handler = null;
+        this.telegramSent = false; // захист від повторної відправки
     },
 
     onResetEvent: function () {
-        // --- Збереження локальної статистики гри ---
+        // --- збереження локального прогресу ---
         this.savedData = {
             score: game.data.score,
             steps: game.data.steps
@@ -20,7 +21,7 @@ game.GameOverScreen = me.ScreenObject.extend({
             game.data.newHiScore = true;
         }
 
-        // --- Управління клавішами ---
+        // --- керування клавішами ---
         me.input.bindKey(me.input.KEY.ENTER, "enter", true);
         me.input.bindKey(me.input.KEY.SPACE, "enter", false);
         me.input.bindPointer(me.input.pointer.LEFT, me.input.KEY.ENTER);
@@ -31,7 +32,7 @@ game.GameOverScreen = me.ScreenObject.extend({
             }
         });
 
-        // --- Спрайт "GAME OVER" ---
+        // --- спрайти GAME OVER ---
         me.game.world.addChild(new me.Sprite(
             me.game.viewport.width / 2,
             me.game.viewport.height / 2 - 100,
@@ -45,10 +46,9 @@ game.GameOverScreen = me.ScreenObject.extend({
         );
         me.game.world.addChild(gameOverBG, 10);
 
-        // фон
         me.game.world.addChild(new BackgroundLayer("bg", 1));
 
-        // земля
+        // ground
         this.ground1 = me.pool.pull("ground", 0, me.game.viewport.height - 96);
         this.ground2 = me.pool.pull(
             "ground",
@@ -58,7 +58,7 @@ game.GameOverScreen = me.ScreenObject.extend({
         me.game.world.addChild(this.ground1, 11);
         me.game.world.addChild(this.ground2, 11);
 
-        // NEW HI-SCORE бейдж
+        // NEW HI-SCORE
         if (game.data.newHiScore) {
             var newRect = new me.Sprite(
                 gameOverBG.width / 2,
@@ -68,7 +68,7 @@ game.GameOverScreen = me.ScreenObject.extend({
             me.game.world.addChild(newRect, 12);
         }
 
-        // --- Діалог з результатами ---
+        // --- текстовий діалог з результатами ---
         this.dialog = new (me.Renderable.extend({
             init: function () {
                 this._super(
@@ -85,7 +85,6 @@ game.GameOverScreen = me.ScreenObject.extend({
                 var stepsText = this.font.measureText(renderer, this.steps);
                 var topStepsText = this.font.measureText(renderer, this.topSteps);
 
-                // поточні очки
                 this.font.draw(
                     renderer,
                     this.steps,
@@ -93,7 +92,6 @@ game.GameOverScreen = me.ScreenObject.extend({
                     me.game.viewport.height / 2
                 );
 
-                // рекорд у грі (локальний)
                 this.font.draw(
                     renderer,
                     this.topSteps,
@@ -104,22 +102,30 @@ game.GameOverScreen = me.ScreenObject.extend({
         }));
         me.game.world.addChild(this.dialog, 12);
 
-        // --- КЛЮЧОВЕ: ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM ---
-        try {
-            if (window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData) {
-                var payload = {
-                    game: "clickgame",
-                    score: Number(game.data.steps) || 0
-                };
+        // --- ВІДПРАВКА РЕЗУЛЬТАТУ В TELEGRAM ---
+        // виконується ОДИН раз при показі GameOver екрана
+        if (!this.telegramSent) {
+            this.telegramSent = true;
 
-                console.log("Sending score to Telegram:", payload);
+            try {
+                if (window.Telegram && Telegram.WebApp && typeof Telegram.WebApp.sendData === "function") {
+                    var payload = {
+                        game: "clickgame",
+                        score: Number(game.data.steps) || 0
+                    };
 
-                Telegram.WebApp.sendData(JSON.stringify(payload));
-            } else {
-                console.log("Telegram WebApp not available in this context");
+                    // цей alert ти точно побачиш, якщо блок виконався
+                    alert("Score sent to bot: " + payload.score);
+
+                    Telegram.WebApp.sendData(JSON.stringify(payload));
+                    // Telegram за документацією має закрити WebApp автоматично
+                } else {
+                    // у звичайному браузері (не в Telegram) потрапляємо сюди
+                    console.log("Telegram WebApp API not available in this environment.");
+                }
+            } catch (e) {
+                console.log("Telegram WebApp sendData error:", e);
             }
-        } catch (e) {
-            console.log("Telegram WebApp sendData error:", e);
         }
     },
 
