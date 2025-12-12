@@ -2,9 +2,9 @@
 (function () {
   "use strict";
 
-  function log() {
-    try { console.log.apply(console, arguments); } catch (e) {}
-  }
+  // === CONFIG ===
+  // Put your bot username here (without @). It must match your real bot.
+  var BOT_USERNAME = "adidas2026bot";
 
   function toast(msg) {
     try {
@@ -29,74 +29,112 @@
       el.textContent = msg;
       el.style.display = "block";
       clearTimeout(el._t);
-      el._t = setTimeout(function () { el.style.display = "none"; }, 2500);
+      el._t = setTimeout(function () { el.style.display = "none"; }, 3500);
     } catch (e) {}
   }
 
-  function canUseTelegram() {
-    return !!(window.Telegram && Telegram.WebApp && typeof Telegram.WebApp.sendData === "function");
+  function safeNumber(x) {
+    var n = Number(x);
+    return Number.isFinite(n) ? n : 0;
   }
 
-  function sendScoreOnce(score) {
-    score = Number(score) || 0;
+  /**
+   * Preferred: open deep-link to bot with /start score_<N>
+   * Fallback: Telegram.WebApp.sendData (if allowed/works)
+   */
+  function sendScoreToBot(score) {
+    score = safeNumber(score);
 
-    // Avoid duplicates in same WebView session
-    if (window.__tg_score_sent_for_steps === score && window.__tg_score_sent_ts && (Date.now() - window.__tg_score_sent_ts) < 3000) {
+    if (!window.Telegram || !Telegram.WebApp) {
+      console.log("[TG] Telegram.WebApp not found");
+      toast("Telegram.WebApp not found");
       return;
     }
-    window.__tg_score_sent_for_steps = score;
-    window.__tg_score_sent_ts = Date.now();
 
     try {
-      if (!canUseTelegram()) {
-        log("[TG] Telegram.WebApp.sendData not available");
-        toast("Telegram WebApp API not available");
-        return;
+      if (typeof Telegram.WebApp.ready === "function") Telegram.WebApp.ready();
+    } catch (e) {}
+
+    var payload = "score_" + String(Math.max(0, Math.floor(score)));
+    var link = "https://t.me/" + BOT_USERNAME + "?start=" + encodeURIComponent(payload);
+
+    // Visible debug for you
+    toast("Sent score: " + score);
+
+    // 1) Deep link (most reliable across Telegram clients)
+    if (typeof Telegram.WebApp.openTelegramLink === "function") {
+      console.log("[TG] openTelegramLink:", link);
+      Telegram.WebApp.openTelegramLink(link);
+
+      // Close after a short delay (gives Telegram time to process the link)
+      setTimeout(function () {
+        try { Telegram.WebApp.close(); } catch (e) {}
+      }, 400);
+
+      return;
+    }
+
+    // 2) Fallback: sendData
+    if (typeof Telegram.WebApp.sendData === "function") {
+      try {
+        Telegram.WebApp.sendData(JSON.stringify({
+          game: "clickgame",
+          score: score,
+          ts: Date.now()
+        }));
+        console.log("[TG] sendData called. score=", score);
+      } catch (e) {
+        console.log("[TG] sendData error:", e);
       }
 
-      // Recommended lifecycle call (no-op if already ready)
-      if (typeof Telegram.WebApp.ready === "function") Telegram.WebApp.ready();
+      // Close after delay
+      setTimeout(function () {
+        try { Telegram.WebApp.close(); } catch (e) {}
+      }, 400);
 
-      var payload = { game: "clickgame", score: score, ts: Date.now() };
-      Telegram.WebApp.sendData(JSON.stringify(payload));
-
-      // NOTE: sendData may auto-close the WebApp. Do NOT call Telegram.WebApp.close() here.
-      log("[TG] score sent:", score);
-      toast("Score sent: " + score);
-    } catch (e) {
-      log("[TG] sendScore error:", e);
-      toast("sendScore error: " + e);
+      return;
     }
+
+    console.log("[TG] No openTelegramLink/sendData available");
+    toast("No Telegram send method");
   }
 
+  // Patch me.state.change to detect GAME_OVER reliably
   function patchStateChange() {
-    if (!window.me || !me.state || !window.game) return false;
+    if (!window.me || !me.state || typeof me.state.change !== "function") return false;
+    if (me.state.__tg_patched_change) return true;
 
-    var orig = me.state.change;
-    if (orig && !orig.__tg_patched) {
-      me.state.change = function (state) {
-        // call original first: the engine may mutate game.data.steps during transition
-        var r = orig.apply(this, arguments);
+    var original = me.state.change;
+    me.state.__tg_patched_change = true;
 
-        try {
-          if (state === me.state.GAME_OVER) {
-            // Prefer steps as "score"
-            var steps = (game && game.data) ? game.data.steps : 0;
-            sendScoreOnce(steps);
+    me.state.change = function (state) {
+      var res = original.apply(this, arguments);
+
+      try {
+        // GAME_OVER is usually a numeric constant; compare with me.state.GAME_OVER
+        if (state === me.state.GAME_OVER) {
+          var steps = (window.game && game.data) ? game.data.steps : 0;
+          // prevent multiple sends for same game over screen
+          if (!me.state.__tg_sent_once) {
+            me.state.__tg_sent_once = true;
+            sendScoreToBot(steps);
           }
-        } catch (e) {
-          log("[TG] state.change hook error:", e);
+        } else if (state === me.state.PLAY) {
+          // reset when a new game starts
+          me.state.__tg_sent_once = false;
         }
-        return r;
-      };
-      me.state.change.__tg_patched = true;
-      log("[TG] state.change patched");
-      return true;
-    }
-    return false;
+      } catch (e) {
+        console.log("[TG] patch handler error:", e);
+      }
+
+      return res;
+    };
+
+    console.log("[TG] state.change patched");
+    return true;
   }
 
-  // Wait up to 10s for melonJS + game to be ready
+  // Retry patching for 10s (scripts can load slowly)
   var start = Date.now();
   var t = setInterval(function () {
     if (patchStateChange()) {
@@ -105,7 +143,7 @@
     }
     if (Date.now() - start > 10000) {
       clearInterval(t);
-      log("[TG] patch timeout: me/game not ready");
+      console.log("[TG] patch timeout: me.state not ready");
     }
   }, 100);
 })();
