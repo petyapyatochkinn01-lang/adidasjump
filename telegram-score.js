@@ -14,6 +14,11 @@
         }));
 
         console.log("[TG] score sent:", score);
+
+        // 🔴 КРИТИЧНО: закриваємо WebApp
+        setTimeout(() => {
+          Telegram.WebApp.close();
+        }, 300);
       }
     }
 
