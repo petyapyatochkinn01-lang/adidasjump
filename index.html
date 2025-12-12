@@ -1,53 +1,52 @@
 <!DOCTYPE HTML>
 <html lang="en">
-  <head>
-    <title>Clumsy Bird</title>
+<head>
+  <title>Clumsy Bird</title>
 
-    <link rel="apple-touch-icon-precomposed" href="data/img/touch-icon-iphone.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="data/img/touch-icon-iphone-retina.png" />
-    <link rel="shortcut icon" href="data/img/favicon.ico">
-    <link rel="stylesheet" type="text/css" media="screen" href="index.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-    <meta id="viewport" name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Clumsy Bird">
+  <link rel="stylesheet" type="text/css" href="index.css">
+  <link rel="shortcut icon" href="data/img/favicon.ico">
 
-    <meta charset="UTF-8" />
-    <meta name="description" content="Clumsy Bird - A Flappy Bird clone using MelonJS"/>
-    <meta name="keywords" content="flappybird, flappy, bird, game, html5, melonjs,clone"/>
-    <meta name="robots" content="index, follow">
+  <!-- ✅ TELEGRAM WEBAPP SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
 
-    <!-- Це попередження в консолі можна ігнорувати -->
-    <meta name="mobile-web-app-capable" content="yes">
+<body>
 
-    <!-- ✅ TELEGRAM WEBAPP SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  </head>
+  <div id="screen"></div>
 
-  <body>
-    <!-- Контейнер гри -->
-    <div id="screen"></div>
+  <!-- melonJS -->
+  <script src="js/melonJS-min.js"></script>
 
-    <!-- melonJS та гра -->
-    <script src="js/melonJS-min.js"></script>
-    <script src="build/clumsy-min.js"></script>
+  <!-- ГРА (НЕ МІНЯЄМО) -->
+  <script src="build/clumsy-min.js"></script>
 
-    <!-- Наш патч, який відправляє score в Telegram -->
-    <script src="telegram-patch.js"></script>
+  <!-- ✅ ІНІЦІАЛІЗАЦІЯ WEBAPP + СТАРТ ГРИ -->
+  <script>
+    function startGameSafely() {
+      console.log("🚀 Starting game...");
+      game.onload();
+    }
 
-    <!-- Старт гри -->
-    <script>
-      window.onReady(function onReady() {
-        game.onload();
-      });
+    if (window.Telegram && Telegram.WebApp) {
+      console.log("✅ Telegram WebApp detected");
 
-      // Телеграм – розгортання на повний екран (не обов'язково, але корисно)
-      if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.expand();
-      }
-    </script>
-  </body>
+      Telegram.WebApp.ready();     // 🔥 КЛЮЧОВЕ
+      Telegram.WebApp.expand();
+
+      // Запускаємо гру ТІЛЬКИ ПІСЛЯ READY
+      setTimeout(startGameSafely, 100);
+    } else {
+      console.log("⚠️ Not in Telegram, starting normally");
+      startGameSafely();
+    }
+  </script>
+
+</body>
 </html>
