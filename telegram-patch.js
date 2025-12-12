@@ -1,13 +1,8 @@
 // telegram-patch.js
-// Sends score to the bot via Telegram.WebApp.sendData when GAME_OVER screen is shown.
-// This implementation patches me.state.change (safe) instead of overriding onResetEvent (can be read-only in some builds).
-
 (function () {
   "use strict";
 
-  function log() {
-    try { console.log.apply(console, arguments); } catch (e) {}
-  }
+  var sentForRun = false; // щоб не відправляти двічі за один програш
 
   function toast(msg) {
     try {
@@ -32,106 +27,129 @@
       el.textContent = msg;
       el.style.display = "block";
       clearTimeout(el._t);
-      el._t = setTimeout(function () { el.style.display = "none"; }, 2500);
+      el._t = setTimeout(function () { el.style.display = "none"; }, 3500);
     } catch (e) {}
   }
 
   function sendScore(score) {
     score = Number(score) || 0;
 
-    if (!(window.Telegram && Telegram.WebApp)) {
-      log("[TG] Telegram.WebApp not found");
-      return;
-    }
-
     try {
-      if (typeof Telegram.WebApp.ready === "function") Telegram.WebApp.ready();
-    } catch (e) {}
-
-    var payload = {
-      game: "clickgame",
-      score: score,
-      ts: Date.now()
-    };
-
-    try {
-      // Visible debug (inside Telegram)
-      if (typeof Telegram.WebApp.showAlert === "function") {
-        Telegram.WebApp.showAlert("Score: " + score + " (sending)");
-      } else {
-        toast("Score: " + score + " (sending)");
+      if (!(window.Telegram && Telegram.WebApp)) {
+        console.log("[TG] Telegram.WebApp not found");
+        toast("[TG] Telegram.WebApp not found");
+        return;
       }
-    } catch (e) {}
 
-    try {
+      if (typeof Telegram.WebApp.ready === "function") Telegram.WebApp.ready();
+
+      if (sentForRun) {
+        console.log("[TG] skip duplicate send");
+        return;
+      }
+      sentForRun = true;
+
+      var payload = {
+        game: "clickgame",
+        score: score,
+        ts: Date.now()
+      };
+
+      console.log("[TG] sending:", payload);
+      toast("[TG] sending score: " + score);
+
       if (typeof Telegram.WebApp.sendData === "function") {
         Telegram.WebApp.sendData(JSON.stringify(payload));
-        log("[TG] sendData called:", payload);
-        // Some clients don't close automatically. Force close.
-        if (typeof Telegram.WebApp.close === "function") {
-          setTimeout(function () {
-            try { Telegram.WebApp.close(); } catch (e) {}
-          }, 150);
-        }
+        console.log("[TG] sendData called");
       } else {
-        log("[TG] Telegram.WebApp.sendData not available");
-        toast("Telegram sendData not available");
+        console.log("[TG] sendData not available");
+        toast("[TG] sendData not available");
       }
     } catch (e) {
-      log("[TG] sendData error:", e);
-      toast("sendData error: " + e);
+      console.log("[TG] sendScore error:", e);
+      toast("[TG] sendScore error: " + e);
     }
+  }
+
+  function patchGameOverPrototype() {
+    if (!window.game || !window.me) return false;
+    if (!game.GameOverScreen || !game.GameOverScreen.prototype) return false;
+
+    var proto = game.GameOverScreen.prototype;
+    if (proto.__tg_patched) return true;
+
+    if (typeof proto.onResetEvent !== "function") return false;
+
+    var original = proto.onResetEvent;
+    proto.__tg_patched = true;
+
+    proto.onResetEvent = function () {
+      // новий програш = нова відправка
+      sentForRun = false;
+
+      original.apply(this, arguments);
+
+      // game.data.steps вже фінальні
+      var steps = (game && game.data) ? game.data.steps : 0;
+      sendScore(steps);
+    };
+
+    console.log("[TG] GameOverScreen.prototype patched");
+    toast("[TG] patched: GameOverScreen");
+    return true;
   }
 
   function patchStateChange() {
     if (!window.me || !me.state || typeof me.state.change !== "function") return false;
-
     if (me.state.__tg_patched_change) return true;
+
+    var origChange = me.state.change;
     me.state.__tg_patched_change = true;
 
-    var originalChange = me.state.change.bind(me.state);
-
-    // Dedup across repeated transitions
-    var lastSentKey = null;
-
-    me.state.change = function (state) {
-      var ret = originalChange(state);
-
-      try {
-        if (state === me.state.GAME_OVER && window.game && game.data) {
-          var score = Number(game.data.steps) || 0;
-          var key = String(score) + ":" + String(game.data.steps) + ":" + String(Date.now() / 1000 | 0);
-
-          // prevent multiple sends within ~1 second for the same score
-          if (lastSentKey && lastSentKey.split(":")[0] === String(score)) {
-            // keep it simple; only block immediate duplicates
-          } else {
-            lastSentKey = key;
-            setTimeout(function () { sendScore(score); }, 200);
-          }
-        }
-      } catch (e) {
-        log("[TG] change hook error:", e);
+    me.state.change = function (stateId) {
+      // якщо йдемо в GAME_OVER — готуємо відправку
+      if (stateId === me.state.GAME_OVER) {
+        // трошки пізніше, щоб steps точно були встановлені
+        setTimeout(function () {
+          try {
+            var steps = (window.game && game.data) ? game.data.steps : 0;
+            // НЕ скидаємо sentForRun тут, бо це може спрацювати разом з onResetEvent.
+            // Просто відправимо, якщо ще не відправляли.
+            if (!sentForRun) sendScore(steps);
+          } catch (e) {}
+        }, 50);
       }
-
-      return ret;
+      return origChange.apply(this, arguments);
     };
 
-    log("[TG] me.state.change patched");
-    toast("TG patch ready");
+    console.log("[TG] me.state.change patched");
+    toast("[TG] patched: state.change");
     return true;
   }
 
-  // Try for up to 15 seconds in case scripts load slowly.
+  function initTelegramUi() {
+    try {
+      if (window.Telegram && Telegram.WebApp) {
+        if (typeof Telegram.WebApp.expand === "function") Telegram.WebApp.expand();
+        if (typeof Telegram.WebApp.ready === "function") Telegram.WebApp.ready();
+      }
+    } catch (e) {}
+  }
+
+  initTelegramUi();
+
   var start = Date.now();
   var timer = setInterval(function () {
-    if (patchStateChange()) {
+    patchStateChange();
+    if (patchGameOverPrototype()) {
+      // залишаємо state.change, але зупиняємо цикл
       clearInterval(timer);
       return;
     }
-    if (Date.now() - start > 15000) {
+    if (Date.now() - start > 10000) {
       clearInterval(timer);
-      log("[TG] patch timeout: me.state.change not found");
+      console.log("[TG] patch timeout (game/me not ready)");
+      toast("[TG] patch timeout");
     }
   }, 100);
 })();
